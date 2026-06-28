@@ -61,3 +61,29 @@ datasheet del AD620.
 - Gate 1 cerrado (falta solo la prueba física opcional del MUX).
 - Gate 2 sin empezar: es la v1 real -> fuente ±5 V + primera cadena analógica de
   1 canal medida con el NI box.
+
+### 2026-06-28 — Opción 2: diseño y firmware inalámbrico (v0)
+Qué hicimos:
+- Documentamos la arquitectura de la opción 2 (inalámbrica) en docs/opcion-2/:
+  README con las decisiones de diseño y firmware-explicado con el código comentado.
+- Cadena: electrodo -> CD4051B (rota canal) -> AD620 -> filtros Bessel 1-40 Hz
+  -> sumador (+1.65V offset) -> ADS1115 (A0) -> ESP8266 -> WiFi -> compu.
+- Firmware v0 del ESP (firmware/src/eeg_esp8266.cpp): crea su propia red WiFi
+  (AP "EEG_Paz", IP 192.168.4.1), rota los 4 canales leyendo el ADS1115, y sirve
+  una pagina web con grafico en vivo. Sin instalar nada en la compu.
+- platformio.ini ahora maneja dos entornos: uno (test del MUX) y nodemcuv2 (ESP).
+Por que (decisiones clave):
+- Un solo front-end + MUX que rota: menos componentes; contra: canales no
+  simultaneos y velocidad limitada por el ADS1115 (~150 muestras/seg por canal).
+- Offset de 1.65V: el ADS1115 single-ended solo mide 0-3.3V; la senal va en +-,
+  se centra con offset y se resta en software.
+- ADS1115 y logica del MUX a 3.3V (el ESP no tolera 5V); VEE del MUX a -5V para no
+  recortar la parte negativa; ESP por power bank (aislacion, sin masa de red).
+Pendiente: armar el hardware y subir el firmware (desde la PC de Paz, por el
+adaptador USB que falta en el Mac). Mejora futura (Gate B): streaming por bloques
+para reconstruir la onda fina de cada canal.
+
+### Estado actual
+- Opcion 1 (NI): pendiente de armado fisico (fuente +-5V + cadena analogica).
+- Opcion 2 (inalambrica): diseno y firmware v0 documentados y en el repo;
+  pendiente de armado y carga al ESP.
